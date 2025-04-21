@@ -300,10 +300,8 @@
         .d3Force('link', d3.forceLink().distance(link => {
           // Make distance inversely proportional to thickness, with linear relationship
           const baseDistance = 100;
-          const thicknessFactor = link.thickness || 1;
-          // Normalize thickness to 0-1 range and scale up the effect
-          const normalizedThickness = (thicknessFactor - 1) / 9; // Convert 1-10 to 0-1
-          return baseDistance / (1 + normalizedThickness * 10); // relation between thickness and distance
+          const thicknessFactor = link.thickness || 1; // default and prevent division by 0 (which is falsy)
+          return 10 + (baseDistance / thicknessFactor);
         }))
         .d3Force('center', null) // the concept of center is not consistent with manual graph editing
         .width(window.innerWidth - 250) // Account for sidebar width
