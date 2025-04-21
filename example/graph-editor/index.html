@@ -230,6 +230,7 @@
         .linkWidth('thickness')
         .linkColor('color')
         .onNodeClick(handleNodeClickForLink)
+        .onNodeRightClick(handleNodeRightClick)
         .onLinkClick(handleLinkClick)
         .onBackgroundClick(() => {
           selectedNode = null;
@@ -304,7 +305,7 @@
           const normalizedThickness = (thicknessFactor - 1) / 9; // Convert 1-10 to 0-1
           return baseDistance / (1 + normalizedThickness * 10); // relation between thickness and distance
         }))
-        .d3Force('center', d3.forceCenter())
+        .d3Force('center', null) // the concept of center is not consistent with manual graph editing
         .width(window.innerWidth - 250) // Account for sidebar width
         .height(window.innerHeight);
 
@@ -581,13 +582,6 @@
             color: document.getElementById('colorPicker').value
           };
           gData.links.push(newLink);
-          
-          // Release both nodes from their fixed positions
-          selectedNode.fx = null;
-          selectedNode.fy = null;
-          node.fx = null;
-          node.fy = null;
-          
           Graph.graphData(gData);
           // Select the newly created link
           handleLinkClick(newLink);
@@ -607,6 +601,13 @@
       selectedLink = null;
       updateNodePropertiesUI();
       updateLinkPropertiesUI();
+      Graph.graphData(gData);
+    }
+
+    function handleNodeRightClick(node) {
+      // Release node from its fixed position and let the simulation take over
+      node.fx = null;
+      node.fy = null;
       Graph.graphData(gData);
     }
 
