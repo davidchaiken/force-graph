@@ -132,6 +132,7 @@
       border: 1px solid #ddd;
       border-radius: 4px;
       cursor: pointer;
+      title: "Create a custom color";
     }
     .color-palette.hidden {
       display: none;
@@ -144,7 +145,7 @@
   <div id="container">
     <div id="sidebar">
       <div class="tool-section">
-        <h3>Node</h3>
+        <h3><center>Node</center></h3>
         <div class="form-group">
           <input type="text" id="nodeLabel" placeholder="Node label">
         </div>
@@ -153,13 +154,13 @@
           <input type="range" id="nodeSize" min="5" max="20" value="5">
         </div>
         <div style="display: flex; gap: 10px;">
-          <button id="addNodeBtn" style="flex: 1;">Add</button>
-          <button id="deleteNodeBtn" style="flex: 1;" disabled>Delete</button>
+          <button id="addNodeBtn" style="flex: 1;" title="Add a new node (or press Spacebar)">Add</button>
+          <button id="deleteNodeBtn" style="flex: 1;" disabled title="Delete selected node (or press Delete key)">Delete</button>
         </div>
       </div>
 
       <div class="tool-section">
-        <h3>Link</h3>
+        <h3><center>Link</center></h3>
         <div class="form-group">
           <label for="linkThickness">Strength:</label>
           <input type="range" id="linkThickness" min="1" max="10" value="1">
@@ -172,12 +173,12 @@
           </label>
         </div>
         <div style="display: flex; gap: 10px;">
-          <button id="deleteLinkBtn" style="flex: 1; opacity: 0.5;" disabled>Delete</button>
+          <button id="deleteLinkBtn" style="flex: 1; opacity: 0.5;" disabled title="Delete selected link (or press Delete key)">Delete</button>
         </div>
       </div>
 
       <div class="tool-section">
-        <h3>Color</h3>
+        <h3><center>Color</center></h3>
         <div class="color-palette" id="colorPalette">
           <div class="color-option" style="background-color: #1f77b4;" data-color="#1f77b4"></div>
           <div class="color-option" style="background-color: #ff7f0e;" data-color="#ff7f0e"></div>
@@ -188,17 +189,17 @@
           <div class="color-option" style="background-color: #e377c2;" data-color="#e377c2"></div>
           <div class="color-option" style="background-color: #7f7f7f;" data-color="#7f7f7f"></div>
         </div>
-        <div class="color-picker-container" id="colorPickerContainer">
+        <div class="color-picker-container" id="colorPickerContainer" title="Create a custom color">
           <input type="color" id="colorPicker">
         </div>
       </div>
 
       <div class="tool-section">
-        <h3>Graph</h3>
-        <button id="autoLayoutBtn">Auto Layout</button>
+        <h3><center>Graph</center></h3>
+        <button id="autoLayoutBtn" title="Automatically arrange the graph">Auto Layout</button>
         <div style="display: flex; gap: 10px; margin-top: 10px;">
-          <button id="saveGraphBtn" style="flex: 1;">Save</button>
-          <button id="loadGraphBtn" style="flex: 1;">Load</button>
+          <button id="saveGraphBtn" style="flex: 1;" title="Save the current graph to a file">Save</button>
+          <button id="loadGraphBtn" style="flex: 1;" title="Load a graph from a file">Load</button>
         </div>
         <div id="graphError" style="display: none; margin-top: 10px; padding: 8px; background-color: #ffebee; color: #c62828; border-radius: 4px;">
           <span id="errorMessage"></span>
@@ -664,15 +665,8 @@
             handleNodeClick(node);
           }
         } else {
-          // If a link exists, select it if shift is held down, otherwise select based on control key
-          if (event.shiftKey) {
-            handleLinkClick(existingLink);
-          } else if (event.ctrlKey) {
-            // Keep the source node selected
-            handleNodeClick(selectedNode);
-          } else {
-            handleNodeClick(node);
-          }
+          // If a link exists, just select the node
+          handleNodeClick(node);
         }
         return; // Exit early to prevent node selection
       }
