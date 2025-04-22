@@ -307,9 +307,18 @@
           // Make distance inversely proportional to thickness, with linear relationship
           const baseDistance = 100;
           const thicknessFactor = link.thickness || 1; // default and prevent division by 0 (which is falsy)
-          return 10 + (baseDistance / thicknessFactor);
+          var colorFactor = 1;
+          if (link.source.color === link.target.color) {
+            if (link.source.color == link.color) {
+              colorFactor = 0.5; // node + link color makes nodes a lot more attractive
+            } else {
+              colorFactor = 0.75; // node color makes nodes more attractive
+            }
+          }
+          return baseDistance * colorFactor / thicknessFactor;
         }))
         .d3Force('center', null) // the concept of center is not consistent with manual graph editing
+        .d3Force('collision', d3.forceCollide(node => (node.size || 5) + 1))
         .width(window.innerWidth - 250) // Account for sidebar width
         .height(window.innerHeight);
 
