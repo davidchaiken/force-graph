@@ -229,14 +229,19 @@
         .nodeVal('size')
         .linkWidth('thickness')
         .linkColor('color')
-        .onNodeClick(handleNodeClickForLink)
+        .onNodeClick((node, event) => handleNodeClickForLink(node, event))
         .onNodeRightClick(handleNodeRightClick)
         .onLinkClick(handleLinkClick)
         .onBackgroundClick(() => {
           selectedNode = null;
           selectedLink = null;
-          updateNodePropertiesUI();
-          updateLinkPropertiesUI();
+          // Only update the UI to reflect the cleared selection
+          const deleteNodeBtn = document.getElementById('deleteNodeBtn');
+          const deleteLinkBtn = document.getElementById('deleteLinkBtn');
+          deleteNodeBtn.disabled = true;
+          deleteNodeBtn.style.opacity = '0.5';
+          deleteLinkBtn.disabled = true;
+          deleteLinkBtn.style.opacity = '0.5';
           Graph.graphData(gData);
         })
         .onNodeDragEnd(node => {
@@ -330,6 +335,18 @@
     let selectedLink = null;
     let isCreatingLink = true;
     let nextNodeId = 1; // maximum node id + 1
+    let lastMouseX = 0;
+    let lastMouseY = 0;
+
+    // Track mouse position
+    document.getElementById('graph').addEventListener('mousemove', (event) => {
+      const rect = event.target.getBoundingClientRect();
+      const x = event.clientX - rect.left;
+      const y = event.clientY - rect.top;
+      const graphCoords = Graph.screen2GraphCoords(x, y);
+      lastMouseX = graphCoords.x;
+      lastMouseY = graphCoords.y;
+    });
 
     // Event handlers
     document.getElementById('addNodeBtn').addEventListener('click', addNode);
@@ -349,6 +366,51 @@
     document.getElementById('loadGraphBtn').addEventListener('click', () => {
       hideGraphError();
       loadGraph();
+    });
+
+    // Add keyboard event handler for Delete and Backspace keys
+    document.addEventListener('keydown', (event) => {
+      if ((event.key === 'Delete' || event.key === 'Backspace') &&
+          document.activeElement !== document.getElementById('nodeLabel')) {
+        if (selectedLink) {
+          deleteLink();
+        } else if (selectedNode) {
+          deleteNode();
+        }
+      }
+    });
+
+    // Add keyboard event handler for Spacebar
+    document.addEventListener('keydown', (event) => {
+      if (event.key === ' ' &&
+          document.activeElement !== document.getElementById('nodeLabel') &&
+          document.activeElement.tagName !== 'INPUT' &&
+          document.activeElement.tagName !== 'TEXTAREA') {
+
+        // Create a new node at the current mouse position
+        const proposedLabel = document.getElementById('nodeLabel').value || 'Node ' + (gData.nodes.length + 1);
+        const size = parseInt(document.getElementById('nodeSize').value);
+        const color = document.getElementById('colorPicker').value;
+        const uniqueLabel = getUniqueLabel(proposedLabel);
+
+        const newNode = {
+          id: nextNodeId++,
+          label: uniqueLabel,
+          color,
+          size,
+          x: lastMouseX,
+          y: lastMouseY,
+          fx: lastMouseX,  // Fix the node in place
+          fy: lastMouseY   // Fix the node in place
+        };
+
+        gData.nodes.push(newNode);
+        Graph.graphData(gData);
+        Graph.d3ReheatSimulation();
+
+        // Select the newly created node
+        handleNodeClick(newNode);
+      }
     });
 
     // Color palette event handlers
@@ -555,14 +617,17 @@
       isCreatingLink = event.target.checked;
       
       if (isCreatingLink) {
-        Graph.onNodeClick(handleNodeClickForLink);
+        Graph.onNodeClick((node, event) => handleNodeClickForLink(node, event));
       } else {
-        Graph.onNodeClick(handleNodeClick);
+        Graph.onNodeClick((node, event) => handleNodeClick(node));
       }
     }
 
-    function handleNodeClickForLink(node) {
-      if (!isCreatingLink) return;
+    function handleNodeClickForLink(node, event) {
+      if (!isCreatingLink) {
+        handleNodeClick(node);
+        return;
+      }
 
       if (selectedNode && selectedNode !== node) {
         // Check if a link already exists between these nodes
@@ -580,12 +645,34 @@
             color: document.getElementById('colorPicker').value
           };
           gData.links.push(newLink);
+
+          // Release both nodes from their fixed positions
+          selectedNode.fx = null;
+          selectedNode.fy = null;
+          node.fx = null;
+          node.fy = null;
+
           Graph.graphData(gData);
-          // Select the newly created link
-          handleLinkClick(newLink);
+
+          // Select the link if shift is held down, otherwise select based on control key
+          if (event.shiftKey) {
+            handleLinkClick(newLink);
+          } else if (event.ctrlKey) {
+            // Keep the source node selected
+            handleNodeClick(selectedNode);
+          } else {
+            handleNodeClick(node);
+          }
         } else {
-          // If a link exists, just select it
-          handleLinkClick(existingLink);
+          // If a link exists, select it if shift is held down, otherwise select based on control key
+          if (event.shiftKey) {
+            handleLinkClick(existingLink);
+          } else if (event.ctrlKey) {
+            // Keep the source node selected
+            handleNodeClick(selectedNode);
+          } else {
+            handleNodeClick(node);
+          }
         }
         return; // Exit early to prevent node selection
       }
