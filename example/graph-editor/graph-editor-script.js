@@ -117,7 +117,12 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         return baseDistance * colorFactor / thicknessFactor;
       }))
-      .d3Force('center', d3.forceCenter(0, 0).strength(0.001)) // gently nudge towards the origin
+      .d3Force('center', null) // center force is not intuitive when editing
+      .onEngineStop(() => { // center force will be started for auto layout
+        console.log('Engine stopped');
+        Graph.d3Force('center', null); // always stop center force when auto layout is done
+        Graph.cooldownTime(15000) // return to default behavior
+      })
       .d3Force('collision', d3.forceCollide(node => (node.size || 5) + 1))
       .width(window.innerWidth - 250) // Account for sidebar width
       .height(window.innerHeight);
@@ -167,6 +172,8 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('linkThickness').addEventListener('input', updateLinkThicknessPreview);
   document.getElementById('autoLayoutBtn').addEventListener('click', () => {
     hideGraphError();
+    Graph.d3Force('center', d3.forceCenter(0, 0).strength(0.1)); // move towards origin
+    Graph.cooldownTime(500); // stop engine and reset center force 1/2 second after auto layout
     startAutoLayout();
   });
   document.getElementById('saveGraphBtn').addEventListener('click', () => {
@@ -678,6 +685,8 @@ document.addEventListener('DOMContentLoaded', () => {
           // Set the graph name if it exists in the metadata
           if (graphData.metadata && graphData.metadata.name) {
             document.getElementById('graphName').value = graphData.metadata.name;
+          } else {
+            document.getElementById('graphName').value = ''; // Clear the name if no metadata or no name
           }
 
           // Check for duplicate node IDs
@@ -735,6 +744,16 @@ document.addEventListener('DOMContentLoaded', () => {
           updateLinkPropertiesUI();
           Graph.graphData(gData);
 
+          // Reattach event listener to the new node size input
+          const sizeInput = document.getElementById('nodeSize');
+          sizeInput.addEventListener('input', () => {
+            updateNodeSizePreview();
+            if (selectedNode) {
+              selectedNode.size = parseInt(sizeInput.value);
+              Graph.graphData(gData);
+            }
+          });
+
           // Calculate bounds of the loaded graph
           let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
           gData.nodes.forEach(node => {
@@ -755,6 +774,7 @@ document.addEventListener('DOMContentLoaded', () => {
               window.innerHeight / (height + 100)
             );
             
+            Graph.d3Force('center', null) // center force is not intuitive when editing
             Graph.centerAt(centerX, centerY, 1000);
             Graph.zoom(scale * 0.8); // Zoom to 80% of the calculated scale to add some padding
           }
