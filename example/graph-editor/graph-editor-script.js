@@ -1,10 +1,5 @@
-console.log('Script started');
-
 // Wait for DOM to be fully loaded
 document.addEventListener('DOMContentLoaded', () => {
-  console.log('ForceGraph available:', typeof ForceGraph !== 'undefined');
-  console.log('d3 available:', typeof d3 !== 'undefined');
-
   // Initialize slider backgrounds
   updateNodeSizePreview();
   updateLinkThicknessPreview();
@@ -104,22 +99,21 @@ document.addEventListener('DOMContentLoaded', () => {
       })
       .d3Force('charge', d3.forceManyBody().strength(-100))
       .d3Force('link', d3.forceLink().distance(link => {
-        // Make distance inversely proportional to thickness, with linear relationship
+        // distance is determined by the color of the nodes and the link
         const baseDistance = 100;
-        const thicknessFactor = link.thickness || 1; // default and prevent division by 0 (which is falsy)
-        var colorFactor = 1;
         if (link.source.color === link.target.color) {
           if (link.source.color == link.color) {
-            colorFactor = 0.5; // node + link color makes nodes a lot more attractive
+            return baseDistance * 0.5; // node + link color makes nodes a lot more attractive
           } else {
-            colorFactor = 0.75; // node color makes nodes more attractive
+            return baseDistance * 0.75; // node color makes nodes more attractive
           }
         }
-        return baseDistance * colorFactor / thicknessFactor;
+        return baseDistance;
+      }).strength(link => {
+        return (link.thickness || 1) * 0.1; // strength is proportional to thickness
       }))
       .d3Force('center', null) // center force is not intuitive when editing
       .onEngineStop(() => { // center force will be started for auto layout
-        console.log('Engine stopped');
         Graph.d3Force('center', null); // always stop center force when auto layout is done
         Graph.cooldownTime(15000) // return to default behavior
       })
@@ -142,8 +136,6 @@ document.addEventListener('DOMContentLoaded', () => {
       .width(window.innerWidth - 250)
       .height(window.innerHeight);
   });
-
-  console.log('Graph initialized:', Graph);
 
   // State variables
   let selectedNode = null;
@@ -173,7 +165,7 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('autoLayoutBtn').addEventListener('click', () => {
     hideGraphError();
     Graph.d3Force('center', d3.forceCenter(0, 0).strength(0.1)); // move towards origin
-    Graph.cooldownTime(500); // stop engine and reset center force 1/2 second after auto layout
+    Graph.cooldownTime(3000); // stop engine and reset center force 3 seconds after auto layout
     startAutoLayout();
   });
   document.getElementById('saveGraphBtn').addEventListener('click', () => {
