@@ -185,9 +185,9 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  // Add keyboard event handler for Spacebar
+  // Add keyboard event handler for N key
   document.addEventListener('keydown', (event) => {
-    if (event.key === ' ' &&
+    if (event.key === 'n' &&
         document.activeElement !== document.getElementById('nodeLabel') &&
         document.activeElement.tagName !== 'INPUT' &&
         document.activeElement.tagName !== 'TEXTAREA') {
@@ -459,14 +459,15 @@ document.addEventListener('DOMContentLoaded', () => {
         gData.links.push(newLink);
         Graph.graphData(gData);
 
-        // Select the link if shift is held down, otherwise select based on control key
+        // Select the target if shift is held down, otherwise select based on control key
         if (event.shiftKey) {
-          handleLinkClick(newLink);
+          handleNodeClick(node);
         } else if (event.ctrlKey) {
           // Keep the source node selected
           handleNodeClick(selectedNode);
         } else {
-          handleNodeClick(node);
+          // default is to select the link
+          handleLinkClick(newLink);
         }
       } else {
         // If a link exists, just select the node
