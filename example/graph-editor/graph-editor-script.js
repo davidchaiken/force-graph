@@ -43,6 +43,7 @@ document.addEventListener('DOMContentLoaded', () => {
       .onNodeDragEnd(node => {
         node.fx = node.x;
         node.fy = node.y;
+        Graph.d3Force('center', null); // the user is taking control of the positions of nodes
       })
       .nodeCanvasObject((node, ctx, globalScale) => {
         // Draw node
@@ -113,10 +114,6 @@ document.addEventListener('DOMContentLoaded', () => {
         return (link.thickness || 1) * 0.1; // strength is proportional to thickness
       }))
       .d3Force('center', null) // center force is not intuitive when editing
-      .onEngineStop(() => { // center force will be started for auto layout
-        Graph.d3Force('center', null); // always stop center force when auto layout is done
-        Graph.cooldownTime(15000) // return to default behavior
-      })
       .d3Force('collision', d3.forceCollide(node => (node.size || 5) + 1))
       .width(window.innerWidth - 250) // Account for sidebar width
       .height(window.innerHeight);
@@ -165,7 +162,6 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('autoLayoutBtn').addEventListener('click', () => {
     hideGraphError();
     Graph.d3Force('center', d3.forceCenter(0, 0).strength(0.1)); // move towards origin
-    Graph.cooldownTime(3000); // stop engine and reset center force 3 seconds after auto layout
     startAutoLayout();
   });
   document.getElementById('saveGraphBtn').addEventListener('click', () => {
@@ -489,6 +485,7 @@ document.addEventListener('DOMContentLoaded', () => {
     updateNodePropertiesUI();
     updateLinkPropertiesUI();
     Graph.graphData(gData);
+    Graph.d3Force('center', null); // the user is taking control of the positions of nodes
   }
 
   function handleNodeRightClick(node) {
